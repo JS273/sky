@@ -1,0 +1,17 @@
+### --- Font --- ###
+# Sizes
+axes.titlesize : 24
+axes.labelsize : 20
+xtick.labelsize : 16
+ytick.labelsize : 16
+
+# Type
+font.family : 'serif'
+text.usetex : True
+
+### --- Lines --- ###
+lines.linewidth : 3
+lines.markersize : 10
+
+### Figure
+savefig.transparent : False
