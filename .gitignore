@@ -1,0 +1,9 @@
+results/*
+
+run/intern/*
+run/sandbox/*
+
+.vscode
+
+*.egg-info
+*.pyc
