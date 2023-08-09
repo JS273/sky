@@ -9,37 +9,6 @@ from matplotlib.patches import Rectangle
 from collections.abc import Iterable 
 import copy
 
-
-class SimData:
-    def __init__(self, domain_grid, y, y_label, legend = None, parameter_grid = None, tag = "", **plot_style) -> None:
-        
-        self.domain_grid = domain_grid
-        self.parameter_grid = parameter_grid
-        self.y = y
-        self.tag = tag
-
-        self.plotStyle = plot_style
-
-        self.y_label = y_label
-
-        if legend is None:
-            legend = [""]
-
-        if isinstance(legend, str):
-            self.legend = [f'{tag}: {legend}']
-        else:
-            for i in range(len(legend)):
-                legend[i] = f'{tag} {legend[i]}'
-            self.legend = legend 
-        
-        if y.ndim == 1:
-            self.n_samples = 1
-            self.y = y.reshape(-1,1)
-        elif y.ndim == 2:
-            if(y.shape[0] != self.domain_grid.size):
-                raise ValueError('The number of nodes of the domain grid are not matching with the number of values in y.shape[0]')
-            self.n_samples = y.shape[1]
-
 class LinePlot():
     def __init__(self, x, y, x_label = "x", y_label = "f(x)", **line_kwarg):
         self.x = x
@@ -168,6 +137,10 @@ class BarPlot():
         self.x_ticklabels = None
         self.x_ticklabels_rot = 0
 
+        self.draw_xticks = True
+        self.draw_xlabel = True
+        self.draw_yticks = True
+        self.draw_ylabel = True
     def plot(self, ax):
 
         ax.bar(self.x, self.y, **self.bar_kwargs)
@@ -227,7 +200,12 @@ class ContourPlot():
 
         xx = self.grid.meshgrid_mat[0]
         yy = self.grid.meshgrid_mat[1]
-        zz = self.grid.reshape_data(self.grid_val)
+
+        if self.grid_val.ndim == 2:
+            zz = self.grid_val
+        else:
+            zz = self.grid.reshape_data(self.grid_val)
+
 
         cs = ax.contourf(xx,yy,zz, **self.cont_kwargs)
 
@@ -255,7 +233,7 @@ class ImagePlot():
         
     def plot(self, ax):
 
-        ax.imshow(self.image, self.img_kwargs)
+        ax.imshow(self.image, **self.img_kwargs)
         ax.set_title(self.title)
 
         return ax
