@@ -41,19 +41,19 @@ class SimData:
             self.n_samples = y.shape[1]
 
 class LinePlot():
-    def __init__(self, x, y, **line_kwarg):
+    def __init__(self, x, y, x_label = "x", y_label = "f(x)", **line_kwarg):
         self.x = x
         self.y = y
         self.line_kwargs = line_kwarg
 
         # Default ax properties
-        self.x_label = "x"
+        self.x_label = x_label
         self.x_scale = 'linear'
         self.xlim = [None, None]
         self.draw_xticks = True
         self.draw_xlabel = True
 
-        self.y_label = "f(x)"
+        self.y_label = y_label
         self.y_scale = 'linear'
         self.draw_yticks = True
         self.draw_ylabel = True
@@ -351,15 +351,17 @@ class PlotData():
         self.col_sort = col_sort     
 
 class Plotter():
-    def __init__(self, save_path = None, stylesheet = None, save_format = "pdf", save_plot_data = True):
+    def __init__(self, save_path = None, stylesheet = None, save_format = "pdf", save_plot_data = True, open_saved_plot = True):
 
         self.save_path = save_path
         self.save_format = save_format
         self.stylesheet = stylesheet
         self.save_plot_data = save_plot_data
+        self.open_saved_plot = open_saved_plot
 
     def plot(self, *plots, filename = None, fig_size = None, subplot_grid = None, custom_fig = None, col_sort = True):
 
+        if filename is not None: filename = filename.replace(" ", "_")
         n_subplots = len(plots)
 
         # load stylesheet if specified
@@ -431,8 +433,9 @@ class Plotter():
             plt.savefig(path + "/" +  unique_filename + ".png", format='png', dpi = 600)
 
         # Open PDF in vs code
-        system_command = "code " + path + "/" +  unique_filename + ".pdf"
-        os.system(system_command)
+        if self.open_saved_plot:
+            system_command = "code " + path + "/" +  unique_filename + ".pdf"
+            os.system(system_command)
 
         return unique_filename
     
@@ -445,7 +448,7 @@ class Plotter():
             pkg_name = f.read().replace('\n', '')
 
         f= open(path + "/" +  filename + ".py","w")
-        f.write(f"from {pkg_name}.utils.plotlib import * \nimport numpy as np\nimport pickle \n \n# Load plot data \n")
+        f.write(f"from {pkg_name}.plots.plotlib import * \nimport numpy as np\nimport pickle \n \n# Load plot data \n")
         f.write(f"file_path = '{data_file_path}' \n")
         f.write("with open(file_path, 'rb') as file:\n")
         f.write("   plt_data = pickle.load(file) \n\n")

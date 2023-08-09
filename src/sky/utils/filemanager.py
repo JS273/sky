@@ -9,7 +9,10 @@ def all_subdirs_of(b='.'):
         if os.path.isdir(bd): result.append(d)
     return result
 
-def create_result_folder(max_keep = None, archive = False):
+def create_result_folder(tag, max_res_folders, max_daily_folders = None, archive = False):
+
+    tag = tag.replace(" ", "_")
+
     today = date.today()
 
     # dd/mm/YY
@@ -31,11 +34,25 @@ def create_result_folder(max_keep = None, archive = False):
 
     # Keep only last 7 daily result folders
     if not archive:
-        if max_keep is not None:
+        if max_daily_folders is not None:
             date_format = '%Y-%m-%d'
-            remove_folders("./results", max_keep, date_format)
+            remove_folders("./results", max_daily_folders, date_format)
 
-    return path
+    # Output Folder
+    now = datetime.now()
+    time_string = now.strftime("%H_%M_%S")
+    target_folder_path = path + '/' + time_string + "_" + tag 
+
+    # Remove Output folders greater than 
+    if not archive:
+        if max_res_folders is not None:
+            date_format = '%H_%M_%S'
+            remove_folders(path, max_res_folders, date_format)
+
+    # Create target folder
+    os.makedirs(target_folder_path)
+
+    return target_folder_path
 
 def remove_folders(path, max_keep, date_format):
     
@@ -68,21 +85,7 @@ def remove_folders(path, max_keep, date_format):
                         shutil.rmtree(path + "/" + day_folder)
 
 def save_script(filepath, tag = "", max_daily_folders = None, max_res_folders = None, archive = False):
-    path = create_result_folder(max_daily_folders, archive)
-
-    # Output Folder
-    now = datetime.now()
-    time_string = now.strftime("%H_%M_%S")
-    target_folder_path = path + '/' + time_string + "_" + tag 
-
-    # Remove Output folders greater than 
-    if not archive:
-        if max_res_folders is not None:
-            date_format = '%H_%M_%S'
-            remove_folders(path, max_res_folders, date_format)
-
-    # Create target folder
-    os.makedirs(target_folder_path)
+    target_folder_path = create_result_folder(tag, max_res_folders, max_daily_folders, archive)
 
     # Create target file
     target_file = target_folder_path + "/executed_file_" + tag + ".py"
