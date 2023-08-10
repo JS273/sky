@@ -192,9 +192,7 @@ class ContourPlot(Axes2D):
             zz = self.grid_val
         else:
             zz = self.grid.reshape_data(self.grid_val)
-
-        ax = self.set_2D_ax_properties(ax)
-
+            
         cs = ax.contourf(xx,yy,zz, **self.cont_kwargs)
         if self.cbar:
             if self.cbar_ticks is not None:
@@ -202,6 +200,8 @@ class ContourPlot(Axes2D):
             else: 
                 cbar = plt.colorbar(cs, ax = ax)
             cbar.set_label(self.cbar_label)
+
+        ax = self.set_2D_ax_properties(ax)
     
         return ax
 
