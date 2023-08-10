@@ -9,13 +9,8 @@ from matplotlib.patches import Rectangle
 from collections.abc import Iterable 
 import copy
 
-class LinePlot():
-    def __init__(self, x, y, x_label = "x", y_label = "f(x)", **line_kwarg):
-        self.x = x
-        self.y = y
-        self.line_kwargs = line_kwarg
-
-        # Default ax properties
+class Axes2D:
+    def __init__(self, x_label = "x", y_label = "f(x)") -> None:
         self.x_label = x_label
         self.x_scale = 'linear'
         self.xlim = [None, None]
@@ -24,11 +19,38 @@ class LinePlot():
 
         self.y_label = y_label
         self.y_scale = 'linear'
+        self.ylim = [None, None]
         self.draw_yticks = True
         self.draw_ylabel = True
 
+        self.axis_equal = False
         self.plot_grid = True
         self.title = ''
+    
+    def set_2D_ax_properties(self, ax):
+        
+        ax.set_xscale(self.x_scale)
+        ax.set_xlim(left = self.xlim[0], right = self.xlim[1])
+        
+        ax.set_yscale(self.y_scale)
+        ax.set_ylim(bottom = self.ylim[0], top = self.ylim[1])
+
+        ax.grid(self.plot_grid)
+        ax.set_title(self.title)
+        ax.tick_params(labelbottom = self.draw_xticks, labelleft = self.draw_yticks)
+
+        if self.axis_equal:
+            ax.axis('equal')
+
+        return ax
+
+class LinePlot(Axes2D):
+    def __init__(self, x, y, x_label = "x", y_label = "f(x)", **line_kwarg):
+        super().__init__(x_label, y_label)
+        self.x = x
+        self.y = y
+        self.line_kwargs = line_kwarg
+
         self.legend = '_'
 
         # Default line properties
@@ -64,32 +86,17 @@ class LinePlot():
             self.line_kwargs["color"] = self.default_colors[self.color_no]
 
         ax.plot(self.x, self.y, **self.line_kwargs)
-        ax.set_yscale(self.y_scale)
-        ax.set_xscale(self.x_scale)
-        ax.set_xlim(left = self.xlim[0], right = self.xlim[1])
-        ax.grid(self.plot_grid)
-        ax.set_title(self.title)
-        ax.tick_params(labelbottom = self.draw_xticks, labelleft = self.draw_yticks)
+        
+        ax = self.set_2D_ax_properties(ax)
+
         return ax
 
-class HistPlot():
-    def __init__(self, y, **hist_kwarg):
+class HistPlot(Axes2D):
+    def __init__(self, y, x_label = 'x', y_label = 'f(x)', **hist_kwarg):
+        super().__init__(x_label, y_label)
         self.y = y
         self.hist_kwarg = hist_kwarg
 
-        # Default ax properties
-        self.x_label = "x"
-        self.x_scale = 'linear'
-        self.draw_xticks = True
-        self.draw_xlabel = True
-
-        self.y_label = "density"
-        self.y_scale = 'linear'
-        self.draw_yticks = True
-        self.draw_ylabel = True
-
-        self.plot_grid = True
-        self.title = ''
         self.legend = '_'
 
         # Default hist properties
@@ -111,72 +118,52 @@ class HistPlot():
         self.set_default_hist_kwargs()
 
         ax.hist(self.y, **self.hist_kwarg)
-        ax.set_yscale(self.y_scale)
-        ax.grid(self.plot_grid)
-        ax.set_title(self.title)
-        ax.tick_params(labelbottom = self.draw_xticks, labelleft = self.draw_yticks)
+        
+        ax = self.set_2D_ax_properties(ax)
+
         return ax
 
-class BarPlot():
-    def __init__(self, y, x = None, **bar_kwargs):
-        
+class BarPlot(Axes2D):
+    def __init__(self, y, x = None, x_label = "x", y_label = "f(x)", **bar_kwargs):
+        super().__init__(x_label, y_label)
         self.y = y.flatten()
         self.bar_kwargs = bar_kwargs
 
         if x is None:
             self.x = np.arange(self.y.shape[0])
 
-        # Default ax properties
-        self.x_label = "Categorie"
-        self.y_label = "f(x)"
+        # Special ax properties
         self.legend = []
-        self.x_scale = 'linear'
-        self.y_scale = 'linear'
-        self.title = ''
-        self.plot_grid = True
         self.x_ticklabels = None
         self.x_ticklabels_rot = 0
 
-        self.draw_xticks = True
-        self.draw_xlabel = True
-        self.draw_yticks = True
-        self.draw_ylabel = True
     def plot(self, ax):
 
         ax.bar(self.x, self.y, **self.bar_kwargs)
-        ax.set_yscale(self.y_scale)
-        ax.set_xscale(self.x_scale)
-        ax.grid(self.plot_grid)
-        ax.set_title(self.title)
-
+        
         if self.x_ticklabels is not None:
             ax.set_xticks(np.asarray([i for i in range(len(self.x_ticklabels))]))
             ax.set_xticklabels(self.x_ticklabels, rotation= self.x_ticklabels_rot)
 
+        ax = self.set_2D_ax_properties(ax)
+
         return ax
 
-class ContourPlot():
+class ContourPlot(Axes2D):
     def __init__(self, domain_grid, grid_val, **cont_kwargs):
+        super().__init__()
+
         self.grid = domain_grid
         self.grid_val = grid_val
         self.cont_kwargs = cont_kwargs
 
-        # Default ax properties
-        self.x_label = self.grid.labels[0]
-        self.draw_xticks = True
-        self.draw_xlabel = True
-
-        self.y_label = self.grid.labels[1]
-        self.draw_yticks = True
-        self.draw_ylabel = True
-
+        # Special ax properties
         self.cbar = False
         self.cbar_label = ""
-        
         self.cbar_ticks = None
+        self.x_label = self.grid.labels[0]
+        self.y_label = self.grid.labels[1]
 
-        self.title = ""
-        self.axis_equal = False
         self.legend = []
 
         # Default cont properties
@@ -206,56 +193,44 @@ class ContourPlot():
         else:
             zz = self.grid.reshape_data(self.grid_val)
 
+        ax = self.set_2D_ax_properties(ax)
 
         cs = ax.contourf(xx,yy,zz, **self.cont_kwargs)
-
-        ax.set_title(self.title)
-        ax.tick_params(labelbottom = self.draw_xticks, labelleft = self.draw_yticks)
-
-        if self.axis_equal:
-            ax.axis('equal')
-        
         if self.cbar:
             if self.cbar_ticks is not None:
                 cbar = plt.colorbar(cs, ax = ax, ticks = self.cbar_ticks)
             else: 
                 cbar = plt.colorbar(cs, ax = ax)
             cbar.set_label(self.cbar_label)
-
+    
         return ax
 
-class ImagePlot():
-    def __init__(self, image, **img_kwargs):
+class ImagePlot(Axes2D):
+    def __init__(self, image, x_label = "x", y_label = "y", **img_kwargs):
+        super().__init__(x_label, y_label)
         self.image = image
         self.img_kwargs = img_kwargs
         self.legend = ""
-        self.title = ""
-        
+
     def plot(self, ax):
 
         ax.imshow(self.image, **self.img_kwargs)
-        ax.set_title(self.title)
+       
+        ax = self.set_2D_ax_properties(ax)
 
         return ax
 
-class ScatterPlot():
+class ScatterPlot(Axes2D):
     def __init__(self, domain_grid, grid_val, **scatter_kwargs):
+        super().__init__()
         self.grid = domain_grid
         self.grid_val = grid_val
         self.scatter_kwargs = scatter_kwargs
-
-        # Default ax properties
-        self.x_label = self.grid.labels[0]
-        self.draw_xticks = True
-        self.draw_xlabel = True
-
-        self.y_label = self.grid.labels[1]
-        self.draw_yticks = True
-        self.draw_ylabel = True 
-
         self.legend = []
 
-        # Default scatter properties
+        # Special ax properties
+        self.x_label = self.grid.labels[0]
+        self.y_label = self.grid.labels[1]
         self.fill_color = '#1f77b4'
         self.alpha = 0.5
 
@@ -276,23 +251,21 @@ class ScatterPlot():
         y = self.grid.nodes[:,1]
         z = self.grid_val
         ax.scatter(x,y, s = z, **self.scatter_kwargs)
-        ax.grid(self.plot_grid)
+        
+        ax = self.set_2D_ax_properties(ax)
+
         return ax
 
-class RectanglePlot():
+class RectanglePlot(Axes2D):
     def __init__(self, xy, width, height, **rect_kwargs) -> None:
+        super().__init__("x", "y")
         self.xy = xy
         self.width = width
         self.height = height
         self.rect_kwargs = rect_kwargs
 
-        # Default ax properties
+        # Special ax properties
         self.legend = []
-        self.x_label = "x"
-        self.y_label = "y"
-        self.title = ""
-
-        # Rectangle properties
         self.facecolor = 'none'
         self.edgecolor = 'black'
         self.lw = 1
@@ -313,7 +286,8 @@ class RectanglePlot():
 
     def plot(self, ax):
         ax.add_patch(Rectangle(self.xy, self.width, self.height, **self.rect_kwargs))
-        ax.set_title(self.title)
+       
+        ax = self.set_default_rect_kwargs(ax)
     
         return ax
 
@@ -560,27 +534,27 @@ def get_multcolumn_subplot(n_regular_plots, n_multi_colm, regular_plot_grid = No
         if n_regular_plots <= 2:
             n_row = 1
             n_col = 2
-            idx_grid = Grid(np.arange(0,2,dtype=int), np.arange(0,1,dtype = int))
+            idx_comb = get_all_comb(np.arange(0,2,dtype=int), np.arange(0,1,dtype = int))
         elif n_regular_plots <= 4:
             n_row = 2
             n_col = 2
-            idx_grid = Grid(np.arange(0,2,dtype=int), np.arange(0,2,dtype = int))
+            idx_comb = get_all_comb(np.arange(0,2,dtype=int), np.arange(0,2,dtype = int))
         elif n_regular_plots <= 6:
             n_row = 2
             n_col = 3
-            idx_grid = Grid(np.arange(0,3,dtype=int), np.arange(0,2,dtype = int))
+            idx_comb = get_all_comb(np.arange(0,3,dtype=int), np.arange(0,2,dtype = int))
         elif n_regular_plots <= 9:
             n_row = 3
             n_col = 3
-            idx_grid = Grid(np.arange(0,3,dtype=int), np.arange(0,3,dtype = int))
+            idx_comb = get_all_comb(np.arange(0,3,dtype=int), np.arange(0,3,dtype = int))
         elif n_regular_plots <= 16:
             n_row = 4
             n_col = 4
-            idx_grid = Grid(np.arange(0,4,dtype=int), np.arange(0,4,dtype = int))
+            idx_comb = get_all_comb(np.arange(0,4,dtype=int), np.arange(0,4,dtype = int))
     elif isinstance(regular_plot_grid, list):
         n_row = regular_plot_grid[0]
         n_col = regular_plot_grid[1]
-        idx_grid = Grid(np.arange(0,n_col,dtype=int), np.arange(0,n_row,dtype = int))
+        idx_comb = get_all_comb(np.arange(0,n_col,dtype=int), np.arange(0,n_row,dtype = int))
     
     n_row_total = n_row + n_multi_colm
     if fig_size is None:
@@ -591,7 +565,7 @@ def get_multcolumn_subplot(n_regular_plots, n_multi_colm, regular_plot_grid = No
     ax = np.array([])
 
     for i in range(n_regular_plots):
-        ax = np.append(ax, fig.add_subplot(gs[int(idx_grid.nodes[i,1]), int(idx_grid.nodes[i,0])]))
+        ax = np.append(ax, fig.add_subplot(gs[int(idx_comb[i,1]), int(idx_comb[i,0])]))
 
     idx_row = n_row
     for i in range(n_multi_colm):
@@ -599,6 +573,21 @@ def get_multcolumn_subplot(n_regular_plots, n_multi_colm, regular_plot_grid = No
         idx_row = idx_row + 1
 
     return fig, ax
+
+def get_all_comb(*vector):
+
+    n_factorial = 1
+    for sample in vector:
+        n_factorial = n_factorial * len(sample)
+    
+    nodes = np.zeros((n_factorial, len(vector)))
+
+    meshgrid_mat = np.meshgrid(*vector)
+
+    for idx, parameter in enumerate(meshgrid_mat):
+        nodes[:,idx] = parameter.flatten()
+
+    return nodes
 
 def create_plots(data, sample = 0, **plt_kwargs):
     
