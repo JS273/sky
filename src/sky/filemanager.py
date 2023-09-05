@@ -9,7 +9,7 @@ def all_subdirs_of(b='.'):
         if os.path.isdir(bd): result.append(d)
     return result
 
-def create_result_folder(tag, max_res_folders, max_daily_folders = None, archive = False):
+def create_result_folder(tag = "", max_res_folders = None, max_daily_folders = None, archive = False):
 
     tag = tag.replace(" ", "_")
 

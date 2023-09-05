@@ -30,13 +30,27 @@ class Axes2D:
     def set_2D_ax_properties(self, ax):
         
         ax.set_xscale(self.x_scale)
-        ax.set_xlim(left = self.xlim[0], right = self.xlim[1])
+        if self.xlim[0] is not None or self.xlim[1] is not None:
+            ax.set_xlim(left = self.xlim[0], right = self.xlim[1])
         
         ax.set_yscale(self.y_scale)
-        ax.set_ylim(bottom = self.ylim[0], top = self.ylim[1])
+        if self.ylim[0] is not None or self.ylim[1] is not None:
+            ax.set_ylim(bottom = self.ylim[0], top = self.ylim[1])
 
         ax.grid(self.plot_grid)
+
         ax.set_title(self.title)
+               
+        if self.draw_xlabel:
+            ax.set_xlabel(self.x_label)
+        else:
+            ax.set_xlabel("")
+
+        if self.draw_ylabel:
+            ax.set_ylabel(self.y_label)
+        else:
+            ax.set_ylabel("")
+        
         ax.tick_params(labelbottom = self.draw_xticks, labelleft = self.draw_yticks)
 
         if self.axis_equal:
@@ -45,13 +59,11 @@ class Axes2D:
         return ax
 
 class LinePlot(Axes2D):
-    def __init__(self, x, y, x_label = "x", y_label = "f(x)", **line_kwarg):
+    def __init__(self, x, y, x_label = "x", y_label = "f(x)", **kwargs):
         super().__init__(x_label, y_label)
         self.x = x
         self.y = y
-        self.line_kwargs = line_kwarg
-
-        self.legend = '_'
+        self.kwargs = kwargs
 
         # Default line properties
         self.linewidth = 2.0
@@ -64,11 +76,11 @@ class LinePlot(Axes2D):
         
     def set_default_line_kwargs(self):
 
-        if 'linestyle' not in self.line_kwargs:
-            self.line_kwargs["linestyle"] = self.linestyle
+        if 'linestyle' not in self.kwargs:
+            self.kwargs["linestyle"] = self.linestyle
 
-        if 'linewidth' not in self.line_kwargs:
-            self.line_kwargs["linewidth"] = self.linewidth
+        if 'linewidth' not in self.kwargs:
+            self.kwargs["linewidth"] = self.linewidth
 
     def add_line(self, y, legend = ""):
 
@@ -83,9 +95,9 @@ class LinePlot(Axes2D):
         self.set_default_line_kwargs()
 
         if self.color_no is not None:
-            self.line_kwargs["color"] = self.default_colors[self.color_no]
+            self.kwargs["color"] = self.default_colors[self.color_no]
 
-        ax.plot(self.x, self.y, **self.line_kwargs)
+        ax.plot(self.x, self.y, **self.kwargs)
         
         ax = self.set_2D_ax_properties(ax)
 
@@ -150,12 +162,12 @@ class BarPlot(Axes2D):
         return ax
 
 class ContourPlot(Axes2D):
-    def __init__(self, domain_grid, grid_val, **cont_kwargs):
+    def __init__(self, domain_grid, grid_val, **kwargs):
         super().__init__()
 
         self.grid = domain_grid
         self.grid_val = grid_val
-        self.cont_kwargs = cont_kwargs
+        self.kwargs = kwargs
 
         # Special ax properties
         self.cbar = False
@@ -175,11 +187,11 @@ class ContourPlot(Axes2D):
 
     def set_default_cont_kwarg(self):
 
-        if 'levels' not in self.cont_kwargs:
-            self.cont_kwargs["levels"] = self.levels
+        if 'levels' not in self.kwargs:
+            self.kwargs["levels"] = self.levels
 
-        if 'cmap' not in self.cont_kwargs:
-            self.cont_kwargs["cmap"] = self.cmap
+        if 'cmap' not in self.kwargs:
+            self.kwargs["cmap"] = self.cmap
         
     def plot(self, ax):
 
@@ -193,7 +205,7 @@ class ContourPlot(Axes2D):
         else:
             zz = self.grid.reshape_data(self.grid_val)
             
-        cs = ax.contourf(xx,yy,zz, **self.cont_kwargs)
+        cs = ax.contourf(xx,yy,zz, **self.kwargs)
         if self.cbar:
             if self.cbar_ticks is not None:
                 cbar = plt.colorbar(cs, ax = ax, ticks = self.cbar_ticks)
@@ -327,31 +339,23 @@ class Plotter():
         else:
             fig, ax = create_figure(n_subplots, subplot_grid, fig_size, col_sort = col_sort)
 
-        # Loop over plots
+        # Loop over subplots
         for i, subplot in enumerate(plots):
 
-            # Data preparation
             has_legend = False
-
+            
+            # Loop over plots in subplot
             if not isinstance(subplot, Iterable): subplot = [subplot]
-                
             for j, plot_item in enumerate(subplot):
                                     
                 ax[i] = plot_item.plot(ax[i])
 
-                if not ax[i].get_legend_handles_labels() == ([], []): has_legend = True
-
-                if j == len(subplot)-1:
-                    if plot_item.draw_xlabel:
-                        ax[i].set_xlabel(plot_item.x_label)
-
-                    if plot_item.draw_ylabel:
-                        ax[i].set_ylabel(plot_item.y_label)
-                    
+                if not ax[i].get_legend_handles_labels() == ([], []): has_legend = True        
                 if has_legend: ax[i].legend()
 
         plt.tight_layout()
         
+        # Saving
         if self.save_path is None:
             plt.show()
 
@@ -394,13 +398,13 @@ class Plotter():
     def create_plotfile(self, path, filename, data_file_path):
         
         # Get package name:
-        folder = glob.glob("./src/*.egg-info")
-        file = folder[0] + "/top_level.txt"
-        with open(file) as f:
-            pkg_name = f.read().replace('\n', '')
+        # folder = glob.glob("./src/*.egg-info")
+        # file = folder[0] + "/top_level.txt"
+        # with open(file) as f:
+        #     pkg_name = f.read().replace('\n', '')
 
         f= open(path + "/" +  filename + ".py","w")
-        f.write(f"from {pkg_name}.plots.plotlib import * \nimport numpy as np\nimport pickle \n \n# Load plot data \n")
+        f.write(f"from sky.plotlib import * \nimport numpy as np\nimport pickle \n \n# Load plot data \n")
         f.write(f"file_path = '{data_file_path}' \n")
         f.write("with open(file_path, 'rb') as file:\n")
         f.write("   plt_data = pickle.load(file) \n\n")
@@ -408,6 +412,7 @@ class Plotter():
         f.write("plots = plt_data.plots \n")
         f.write("stylesheet = plt_data.stylesheet \n")
         f.write("filename = plt_data.filename \n")
+        f.write("fig_size = plt_data.fig_size \n")
         f.write("custom_fig = plt_data.custom_fig \n")
         f.write("col_sort = plt_data.col_sort \n")
         f.write("subplot_grid = plt_data.subplot_grid \n \n")
@@ -418,10 +423,11 @@ class Plotter():
         f.write("if not isExist: \n")
         f.write("   os.makedirs(folder_path)\n")
         f.write("plotter = Plotter(save_path = save_path + '/regenerated_plots', stylesheet= stylesheet, save_plot_data = False) \n")
-        f.write("plotter.plot(*plots, filename = filename, custom_fig = custom_fig, subplot_grid = subplot_grid, col_sort = col_sort) \n")
+        f.write("plotter.plot(*plots, filename = filename, fig_size = fig_size, custom_fig = custom_fig, subplot_grid = subplot_grid, col_sort = col_sort) \n")
 
 def create_figure(n_subplots, subplot_grid, fig_size, col_sort = True):
         if fig_size is not None:
+            fig_size = np.asarray(fig_size)
             fig_size = fig_size / 2.54      # translate cm to inch
         
         if subplot_grid is not None:
@@ -612,7 +618,7 @@ def create_plots(data, sample = 0, **plt_kwargs):
 
     return plt
 
-def create_scalar_para_plots(input, output, sample = 0, **plt_kwargs):
+def create_scalar_para_plots(input, output, sample = 0, **plt_kwargs):   
     
     plt = []
 
