@@ -21,7 +21,7 @@ result_folder = save_script(os.path.realpath(__file__), tag, max_daily_folders =
 logger = init_logger(result_folder, "logfile")
 
 # Get user input from: cmd line > config file > defaults
-config = get_config_demo_model("run\public\save_sim_para\sim_para.yaml", result_folder, logger)
+config = get_config_demo_model("run\\public\\user_inputs\\sim_para.yaml", result_folder, logger)
 print(config)
 
 # -------------------
