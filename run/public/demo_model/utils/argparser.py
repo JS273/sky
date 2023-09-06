@@ -2,12 +2,11 @@ import os
 import shutil
 import configargparse
 
-def get_config_demo_save_sim(config_file, result_folder, logger = None):
+def get_config_demo_model(config_file, result_folder, logger = None):
 
     p = configargparse.ArgParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
     p.add('-c', default = config_file, is_config_file=True, help='config file path')
     p.add('--amp', default = 1.0, type=float, help='Amplitude of Model 1')
-    p.add('--amp2', default = 1.0, type=float, help='Amplitude of Model 2')
     p.add('--nx', default = 100, type=float, help='Spatial discretization')
     p.add('--freq', default = 10, type=float, help='frequency')
     
