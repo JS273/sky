@@ -1,9 +1,12 @@
 from sky.filemanager import save_script
-from run.test_model.logger import init_logger
-from run.test_model.analytic import analytic_model_1d, analytic_model_2d
-from run.test_model.argparser import get_config_demo_save_sim             # This module has to be created in every project itself, since it is project specific
-import os
+import os, sys
 import numpy as np
+
+# Add path to demo model 
+sys.path.append(os.path.abspath("./run/public/"))
+from demo_model.utils.logger import init_logger
+from demo_model.analytic import analytic_model_1d, analytic_model_2d
+from demo_model.utils.argparser import get_config_demo_save_sim             # This module has to be created in every project itself, since it is project specific
 
 # ---------------------
 # --- Setup section ---

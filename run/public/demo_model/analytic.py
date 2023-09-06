@@ -1,5 +1,5 @@
-from sky.plots.plotlib import *
-from sky.plots.datastructures import *
+from sky.plotlib import *
+from sky.datastructures import *
 
 class analytic_model_1d():
     def __init__(self, config, logger = None) -> None:
@@ -16,7 +16,6 @@ class analytic_model_1d():
 
         y = self.amp * np.sin(2 * np.pi * self.freq * x)
         y2 = self.amp2 * np.sin(2 * np.pi * self.freq * x)
-        y3 = 4* self.amp2 * np.sin(2 * np.pi * self.freq * x)
 
         if self.logger is not None: self.logger.info("Mod 1 finished calculation \n")
 
@@ -27,13 +26,9 @@ class analytic_model_1d():
         plt.color_no = 0
         plt.add_line(y2, legend = "Second Model")
 
-        plt2 = LinePlot(x,y3)
-        plt2.xlabel = self.xlabel
-        plt2.ylabel = self.ylabel
-        plt2.color_no = 1
 
         if returnType == "plot":
-            return [plt, plt2] 
+            return plt
         elif returnType == "numpy":
             return y
         

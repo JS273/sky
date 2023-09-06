@@ -68,7 +68,8 @@ def remove_folders(path, max_keep, date_format):
             try:
                 date_obj.append(datetime.strptime(day_folder[0:max_idx], date_format))
             except ValueError:
-                print('Could not interprete foldername ... scipt')
+                if day_folder != "Archive":
+                    print(f'Could not interprete foldername: "{day_folder}" . Skiped folder')
 
         remove_staps = []
 
