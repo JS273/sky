@@ -233,6 +233,40 @@ class ImagePlot(Axes2D):
         return ax
 
 class ScatterPlot(Axes2D):
+    def __init__(self, x, y, s = None, **scatter_kwargs):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.s = s
+        self.scatter_kwargs = scatter_kwargs
+        self.legend = []
+
+        # Special ax properties
+        self.x_label = "x"
+        self.y_label = "y"
+        self.fill_color = '#1f77b4'
+        self.alpha = 0.5
+
+        # Update kwargs
+        self.set_default_cont_kwargs()
+
+    def set_default_cont_kwargs(self):
+
+        if 'c' not in self.scatter_kwargs:
+            self.scatter_kwargs["c"] = self.fill_color
+
+        if 'alpha' not in self.scatter_kwargs:
+            self.scatter_kwargs["alpha"] = self.alpha
+
+    def plot(self, ax):
+
+        ax.scatter(self.x, self.y, s = self.s, **self.scatter_kwargs)
+        
+        ax = self.set_2D_ax_properties(ax)
+
+        return ax
+
+class ScatterGridPlot(Axes2D):
     def __init__(self, domain_grid, grid_val, **scatter_kwargs):
         super().__init__()
         self.grid = domain_grid
