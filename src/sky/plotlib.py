@@ -8,6 +8,7 @@ import matplotlib.colors as cm
 from matplotlib.patches import Rectangle
 from collections.abc import Iterable 
 import copy
+from sky.latexExporter import latex_graphic_export
 
 class Axes2D:
     def __init__(self, x_label = "x", y_label = "f(x)") -> None:
@@ -133,6 +134,59 @@ class HistPlot(Axes2D):
         
         ax = self.set_2D_ax_properties(ax)
 
+        return ax
+    
+class vectorFieldPlot():
+    def __init__(self, x, y, dx, dy, **vec_kwarg):
+        self.x = x
+        self.y = y
+        self.dx = dx
+        self.dy = dy
+        self.line_kwargs = vec_kwarg
+
+        # Default ax properties
+        self.x_label = "x"
+        self.x_scale = 'linear'
+        self.draw_xticks = True
+        self.draw_xlabel = True
+
+        self.y_label = "f(x)"
+        self.y_scale = 'linear'
+        self.draw_yticks = True
+        self.draw_ylabel = True
+
+        self.plot_grid = True
+        self.title = ''
+        self.legend = []
+
+        # Default line properties
+        self.linewidth = 2.0
+        self.linestyle = '-'
+        self.color_no = None
+        self.default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        # Set custom Plot Style
+        self.set_default_line_kwargs()
+        
+    def set_default_line_kwargs(self):
+
+        if 'linestyle' not in self.line_kwargs:
+            self.line_kwargs["linestyle"] = self.linestyle
+
+        if 'linewidth' not in self.line_kwargs:
+            self.line_kwargs["linewidth"] = self.linewidth
+
+    def plot(self, ax):
+
+        if self.color_no is not None:
+            self.line_kwargs["color"] = self.default_colors[self.color_no]
+
+        ax.quiver(self.x, self.y,self.dx, self.dy, **self.line_kwargs)
+        ax.set_yscale(self.y_scale)
+        ax.set_xscale(self.x_scale)
+        ax.grid(self.plot_grid)
+        ax.set_title(self.title)
+        ax.tick_params(labelbottom = self.draw_xticks, labelleft = self.draw_yticks)
         return ax
 
 class BarPlot(Axes2D):
@@ -364,7 +418,8 @@ class Plotter():
 
         # load stylesheet if specified
         if self.stylesheet is not None:
-            plt.style.use(self.stylesheet)
+            styleSheetVar = os.path.dirname(os.path.abspath(__file__)) + "\\mpl_stylesheets\\" + self.stylesheet + ".mplstyle"
+            plt.style.use(styleSheetVar)
 
         # Create figure and ax object
         if custom_fig is not None:
@@ -394,7 +449,7 @@ class Plotter():
             plt.show()
 
         else:
-            unique_filename = self.save_plot(self.save_path, filename)
+            unique_filename = self.save_plot(self.save_path, filename, fig)
             if self.save_plot_data:
                 data_filename = self.save_path + "/data_" +  unique_filename + ".pkl"
                 plt_data = PlotData(plots, filename, self.save_path, self.stylesheet, fig_size, custom_fig, subplot_grid, col_sort)
@@ -405,7 +460,7 @@ class Plotter():
 
         return fig, ax
 
-    def save_plot(self, path, filename):
+    def save_plot(self, path, filename, fig):
         
         # Output Folder
         now = datetime.now()
@@ -421,10 +476,23 @@ class Plotter():
             plt.savefig(path + "/" +  unique_filename + ".pdf") 
         elif self.save_format == "png":
             plt.savefig(path + "/" +  unique_filename + ".png", format='png', dpi = 600)
+        elif self.save_format == "latex":
+            cwd = os.getcwd()
+            filepath = os.path.join(cwd, path)
+            latex_graphic_export(fig, graphic_name=unique_filename,
+                                 file_path=filepath,
+                                 use_replacing_rules = True,
+                                 use_si_pack = True)
+            unique_filename = unique_filename + "Control"
+            os.chdir(cwd)
 
         # Open PDF in vs code
         if self.open_saved_plot:
-            system_command = "code " + path + "/" +  unique_filename + ".pdf"
+            if self.save_format == "latex":
+                save_format = "pdf"
+            else:
+                save_format = self.save_format
+            system_command = "code " + path + "/" +  unique_filename + "." + save_format
             os.system(system_command)
 
         return unique_filename
