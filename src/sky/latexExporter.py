@@ -1,8 +1,62 @@
 import os, re
 
-from toolbox.translationRules import translation_rules, si_rules
+# from toolbox.translationRules import translation_rules, si_rules
+
+translation_rules = [[r'La in dB',                      r'$L_\mathrm{a}$ in dB'],
+                     [r'Lv in dB',                      r'$L_\mathrm{v}$ in dB'],
+                     [r'f in kHz',                      r'$f$ in kHz'],
+                     [r'f in Hz',                       r'$f$ in Hz'],
+                     [r'Afr in %',                      r'$\Delta f_\mathrm{r}$ in \%'],
+                     [r'Afr in \%',                     r'$\Delta f_\mathrm{r}$ in \%'],
+                     [r'n',                             r'$\eta$'],
+                     [r'nf',                            r'$\eta_\mathrm{f}$'],
+                     [r'n2',                            r'$\eta_2$'],
+                     [r'fr',                            r'$f_r$'],
+                     [r'tandf',                         r'$\tan \delta_{\text{f}}$'],
+                     [r'tand2',                         r'$\tan \delta_{\text{2}}$'],
+                     [r'tand',                          r'$\tan \delta_{\text{}}$'],
+                     [r'fr',                            r'$f_\mathrm{r}$'],
+                     [r"E'f",                           r"$E'_\mathrm{f}$"],
+                     [r"E'f (DIN)",                     r'$E_\mathrm{f}$ (DIN)'],
+                     [r"E'f (TBT)",                     r'$E_\mathrm{f}$ (\acrshort{TBT})'],
+                     [r"E'f in GPa",                    r"$E'_\mathrm{f}$ in GPa"],
+                     [r"E'2 in GPa",                    r"$E'_\mathrm{2}$ in GPa"],
+                     [r'E2 in GPa',                     r'E$_2$ in GPa'],
+                     [r"E'f",                           r"$E'_\mathrm{f}$"],
+                     [r'Ef',                            r'$E_\mathrm{f}$'],
+                     [r'|F|',                           r'$|\Gamma|$'],
+                     [r'AEf in \%',                     r"$\Delta E'_\mathrm{f}$ in \%"],
+                     [r'AEf in \%',                     r"$\Delta E'_\mathrm{f}$ in \%"],
+                     [r'ALa in dB',                     r'$\Delta L_\mathrm{a}$ in dB'],
+                     [r'Atandf in \%',                  r'$\Delta \tan \delta_{\text{f}}$ in \%'],
+                     [r'nbwl',                          r'$n_\mathrm{bwl}$'],
+                     [r'fLater',                        r'$\int\text{L}_\text{a, Band}$'],
+                     [r'fLa',                           r'$\int\text{L}_\text{a}$'],
+                     [r'ftand',                        r'$\int\tan{\delta}$'],
+                     [r'hmi in mm',                     r'$h_\mathrm{min}$'],
+                     [r'Exponent m',                    r'Exponent $m_\mathrm{ASL}$'],
+                     [r'E2 und tand2 nach Abb3.21',     r"$E_2$ und $\tan \delta_{2}$ nach Abb.~312"],
+                     [r'Ef nach Gl 34',                 r'E$_\mathrm{f}$ nach Gl.~\ref{eq:Timo_End_mass}'],
+                     [r'Modenordnung i',                r'Modenordnung $i$'],
+                     [r'Dickenverhältnis l/h',          r'Dickenverhältnis ${}^l/_h$'],
+                     [r'ki',                            r'$k_i$'],
+                     [r'ki',                            r'$k_i$'],
+                     [r'T in °C',                       r'T in ${}^\circ C$'],
+                     [r'Ef nach Gl 31',                 r'E$_\mathrm{f}$ nach Gl.~\ref{eq:DIN_Formel}'],]
+
+si_rules = [[r' dB',         r' \Si{}{\decibel}'],
+            [r' m',          r' \Si{}{\meter}'],
+            [r' mm',         r' \Si{}{\milli\meter}'],
+            [r' Hz',         r' \Si{}{\hertz}'],
+            [r' kHz',        r' \Si{}{\kilo\hertz}'],
+            [r' \%',         r' \Si{}{\percent}']]
+
+
 
 def check_translation_rules(string, start, stop, use_si=False):
+
+    global translation_rules, si_rules
+
     adjusted_string = string[:]
     cont = string[start:stop]
     cont = [rule[1] for gg, rule in enumerate(translation_rules) if cont == rule[0]]
@@ -17,7 +71,7 @@ def check_translation_rules(string, start, stop, use_si=False):
 def latex_graphic_export(figure,
                          graphic_name='LatexFigure',
                          file_path=os.getcwd(),
-                         ink_dir=r'C:\Program Files\Inkscape\bin',
+                         ink_dir=r'C:\Program Files\Inkscape',
                          pdf_tex_dir=r'./pics/',
                          size=(6.3, 2.7),
                          stay_tex=False,

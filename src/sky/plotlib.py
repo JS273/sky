@@ -403,13 +403,14 @@ class PlotData():
         self.col_sort = col_sort     
 
 class Plotter():
-    def __init__(self, save_path = None, stylesheet = None, save_format = "pdf", save_plot_data = True, open_saved_plot = True):
+    def __init__(self, save_path = None, stylesheet = None, save_format = "pdf", ink_path = r'C:\Program Files\Inkscape', save_plot_data = True, open_saved_plot = True):
 
         self.save_path = save_path
         self.save_format = save_format
         self.stylesheet = stylesheet
         self.save_plot_data = save_plot_data
         self.open_saved_plot = open_saved_plot
+        self.ink_path = ink_path
 
     def plot(self, *plots, filename = None, fig_size = None, subplot_grid = None, custom_fig = None, col_sort = True):
 
@@ -482,7 +483,8 @@ class Plotter():
             latex_graphic_export(fig, graphic_name=unique_filename,
                                  file_path=filepath,
                                  use_replacing_rules = True,
-                                 use_si_pack = True)
+                                 use_si_pack = True,
+                                 ink_dir= self.ink_path)
             unique_filename = unique_filename + "Control"
             os.chdir(cwd)
 
