@@ -1,18 +1,15 @@
 from sky.filemanager import save_script
 from sky.plotlib import Plotter
-import os, sys
+from sky.demo_model.analytic import analytic_model_2d
 import numpy as np
-
-# Add path to demo model 
-sys.path.append(os.path.abspath("./run/public/"))
-from demo_model.analytic import analytic_model_2d
+import os
 
 # ---------------------
 # --- Setup section ---
 # ---------------------
 
 # result folder
-tag = "1d_sin_wave"
+tag = "1d_sin_wave_pdftex"
 result_folder = save_script(os.path.realpath(__file__), tag, max_daily_folders = 7, max_res_folders = 7)
 
 

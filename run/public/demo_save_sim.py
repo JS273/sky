@@ -1,13 +1,11 @@
 from sky.filemanager import save_script
-import os, sys
+from sky.demo_model.logger import init_logger
+from sky.demo_model.argparser import get_config_demo_model
+from sky.demo_model.analytic import analytic_model_1d
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Add path to demo model 
-sys.path.append(os.path.abspath("./run/public/"))
-from demo_model.utils.logger import init_logger
-from demo_model.analytic import analytic_model_1d
-from demo_model.utils.argparser import get_config_demo_model            # This module has to be created in every project itself, since it is project specific
 
 # ---------------------
 # --- Setup section ---
@@ -21,7 +19,7 @@ result_folder = save_script(os.path.realpath(__file__), tag, max_daily_folders =
 logger = init_logger(result_folder, "logfile")
 
 # Get user input from: cmd line > config file > defaults
-config = get_config_demo_model("run\\public\\user_inputs\\sim_para.yaml", result_folder, logger)
+config = get_config_demo_model("run\\public\\user_input_files\\sim_para.yaml", result_folder, logger)
 print(config)
 
 # -------------------

@@ -8,7 +8,7 @@ import matplotlib.colors as cm
 from matplotlib.patches import Rectangle
 from collections.abc import Iterable 
 import copy
-from sky.latexExporter import latex_graphic_export
+from sky.pdftex_export import latex_graphic_export
 
 class Axes2D:
     def __init__(self, x_label = "x", y_label = "f(x)") -> None:
@@ -419,8 +419,7 @@ class Plotter():
 
         # load stylesheet if specified
         if self.stylesheet is not None:
-            styleSheetVar = os.path.dirname(os.path.abspath(__file__)) + "\\mpl_stylesheets\\" + self.stylesheet + ".mplstyle"
-            plt.style.use(styleSheetVar)
+            plt.style.use(self.stylesheet)
 
         # Create figure and ax object
         if custom_fig is not None:
