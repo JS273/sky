@@ -412,7 +412,7 @@ class Plotter():
         self.open_saved_plot = open_saved_plot
         self.ink_path = ink_path
 
-    def plot(self, *plots, filename = None, fig_size = None, subplot_grid = None, custom_fig = None, col_sort = True):
+    def plot(self, *plots, filename = None, fig_size = None, subplot_grid = None, custom_fig = None, col_sort = True, leg_pos = 'best'):
 
         if filename is not None: filename = filename.replace(" ", "_")
         n_subplots = len(plots)
@@ -440,7 +440,7 @@ class Plotter():
                 ax[i] = plot_item.plot(ax[i])
 
                 if not ax[i].get_legend_handles_labels() == ([], []): has_legend = True        
-                if has_legend: ax[i].legend()
+                if has_legend: ax[i].legend(loc = leg_pos)
 
         plt.tight_layout()
         
