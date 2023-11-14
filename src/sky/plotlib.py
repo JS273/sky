@@ -27,6 +27,7 @@ class Axes2D:
         self.axis_equal = False
         self.plot_grid = True
         self.title = ''
+        self.leg_pos = 'best'
     
     def set_2D_ax_properties(self, ax):
         
