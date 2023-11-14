@@ -441,7 +441,7 @@ class Plotter():
                 ax[i] = plot_item.plot(ax[i])
 
                 if not ax[i].get_legend_handles_labels() == ([], []): has_legend = True        
-                if has_legend: ax[i].legend()
+                if has_legend: ax[i].legend(loc = plot_item.leg_pos)
         
         if fig_title is not None:
             fig.suptitle(fig_title)    
