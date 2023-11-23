@@ -413,7 +413,7 @@ class Plotter():
         self.open_saved_plot = open_saved_plot
         self.ink_path = ink_path
 
-    def plot(self, *plots, filename = None, fig_size = None, fig_title = None, subplot_grid = None, custom_fig = None, col_sort = True):
+    def plot(self, *plots, filename = None, fig_size = None, fig_title = None, subplot_grid = None, custom_fig = None, col_sort = True, plt_show = True):
 
         if filename is not None: filename = filename.replace(" ", "_")
         n_subplots = len(plots)
@@ -424,8 +424,8 @@ class Plotter():
 
         # Create figure and ax object
         if custom_fig is not None:
-            fig = copy.deepcopy(custom_fig[0])
-            ax = copy.deepcopy(custom_fig[1])
+            fig = custom_fig[0]
+            ax = custom_fig[1]
         else:
             fig, ax = create_figure(n_subplots, subplot_grid, fig_size, col_sort = col_sort)
 
@@ -448,10 +448,7 @@ class Plotter():
 
         plt.tight_layout()
         # Saving
-        if self.save_path is None:
-            plt.show()
-
-        else:
+        if self.save_path is not None:
             unique_filename = self.save_plot(self.save_path, filename, fig)
             if self.save_plot_data:
                 data_filename = self.save_path + "/data_" +  unique_filename + ".pkl"
@@ -460,6 +457,8 @@ class Plotter():
                     pickle.dump(plt_data, file)
 
                 self.create_plotfile(self.save_path, unique_filename, data_filename)
+        elif plt_show:
+            plt.show()
 
         return fig, ax
 
