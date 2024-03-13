@@ -83,12 +83,6 @@ class Axes2D:
 
         if self.y_ticks is not None:
             ax.set_yticks(self.y_ticks)
-
-        # if not self.draw_xticks:
-        #     ax.set_xticks([])
-
-        # if not self.draw_yticks:
-        #     ax.set_yticks([])
         
         if self.draw_xticks is not None:
             ax.tick_params(bottom = self.draw_xticks)
@@ -281,6 +275,7 @@ class ContourPlot(Axes2D):
         self.y_label = self.grid.labels[1]
         self.plot_grid = False
         self.legend = []
+        self.edgecolor = None
 
         # Default cont properties
         self.levels = 50
@@ -316,6 +311,10 @@ class ContourPlot(Axes2D):
             else: 
                 cbar = plt.colorbar(cs, ax = ax)
             cbar.set_label(self.cbar_label)
+
+        if self.edgecolor is not None:
+            for c in cs.collections:
+                c.set_edgecolor(self.edgecolor)
 
         ax = self.set_2D_ax_properties(ax)
     
