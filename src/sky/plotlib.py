@@ -1,34 +1,59 @@
 import os
-import pickle
-import glob
+import pickle, vtk
+import seaborn as sns
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as cm
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, Polygon
+from matplotlib.tri import Triangulation
 from collections.abc import Iterable 
-import copy
 from sky.pdftex_export import latex_graphic_export
 
 class Axes2D:
     def __init__(self, x_label = "x", y_label = "f(x)") -> None:
+        
+        # x axis
         self.x_label = x_label
         self.x_scale = 'linear'
         self.xlim = [None, None]
-        self.draw_xticks = True
+        self.draw_xticklabels = None
+        self.draw_xticks = None
         self.draw_xlabel = True
+        self.x_ticks = None
+        self.x_axis_offset = None
 
+        # y axis
         self.y_label = y_label
         self.y_scale = 'linear'
         self.ylim = [None, None]
-        self.draw_yticks = True
+        self.draw_yticklabels = None
+        self.draw_yticks = None
         self.draw_ylabel = True
-
+        self.y_ticks = None
+        self.x_axis_offset = None
         self.axis_equal = False
+
+        # Frame 
+        self.rm_top_frame = False
+        self.rm_bottom_frame = False
+        self.rm_left_frame = False
+        self.rm_right_frame = False
+        self.frame_offset = 0
+
+        # Grid
         self.plot_grid = True
+        self.grid_type = "major"
+        self.grid_axis = "both"
         self.title = ''
         self.leg_pos = 'best'
-    
+
+    def set_frame_prop(self, offset, rm_top = False, rm_right = False, rm_left = False, rm_bottom = False):
+        self.frame_offset = offset
+        self.rm_bottom_frame = rm_bottom
+        self.rm_top_frame = rm_top
+        self.rm_left_frame = rm_left
+        self.rm_right_frame = rm_right
+
     def set_2D_ax_properties(self, ax):
         
         ax.set_xscale(self.x_scale)
@@ -52,8 +77,32 @@ class Axes2D:
             ax.set_ylabel(self.y_label)
         else:
             ax.set_ylabel("")
+
+        if self.x_ticks is not None:
+            ax.set_xticks(self.x_ticks)
+
+        if self.y_ticks is not None:
+            ax.set_yticks(self.y_ticks)
+
+        # if not self.draw_xticks:
+        #     ax.set_xticks([])
+
+        # if not self.draw_yticks:
+        #     ax.set_yticks([])
         
-        ax.tick_params(labelbottom = self.draw_xticks, labelleft = self.draw_yticks)
+        if self.draw_xticks is not None:
+            ax.tick_params(bottom = self.draw_xticks)
+
+        if self.draw_yticks is not None:
+            ax.tick_params(left = self.draw_yticks, right = self.draw_yticks)
+        
+        if self.draw_xticklabels is not None:
+            ax.tick_params(labelbottom = self.draw_xticklabels)
+
+        if self.draw_yticklabels is not None:
+            ax.tick_params(labelleft = self.draw_yticklabels, labelright = self.draw_yticklabels)
+
+        sns.despine(ax=ax, offset=self.frame_offset, bottom = self.rm_bottom_frame, left = self.rm_left_frame, top = self.rm_top_frame, right = self.rm_right_frame)
 
         if self.axis_equal:
             ax.axis('equal')
@@ -230,7 +279,7 @@ class ContourPlot(Axes2D):
         self.cbar_ticks = None
         self.x_label = self.grid.labels[0]
         self.y_label = self.grid.labels[1]
-
+        self.plot_grid = False
         self.legend = []
 
         # Default cont properties
@@ -271,6 +320,57 @@ class ContourPlot(Axes2D):
         ax = self.set_2D_ax_properties(ax)
     
         return ax
+    
+class TriContourPlot(Axes2D):
+    def __init__(self, x, y, z, triangles, x_label = "x", y_label = "y", **kwargs):
+        super().__init__()
+
+        self.triangles = triangles
+        self.x = x
+        self.y = y
+        self.z = z
+        self.kwargs = kwargs
+
+        # Special ax properties
+        self.cbar = False
+        self.cbar_label = ""
+        self.cbar_ticks = None
+        self.x_label = x_label
+        self.y_label = y_label
+        self.plot_grid = False
+        self.legend = []
+
+        # Default cont properties
+        self.levels = 50
+        self.cmap = "viridis"
+
+        # Set custom Plot Style
+        self.set_default_tri_cont_kwarg()
+
+    def set_default_tri_cont_kwarg(self):
+
+        if 'levels' not in self.kwargs:
+            self.kwargs["levels"] = self.levels
+
+        if 'cmap' not in self.kwargs:
+            self.kwargs["cmap"] = self.cmap
+        
+    def plot(self, ax):
+
+        self.set_default_tri_cont_kwarg()
+
+        triangulation = Triangulation(self.x,self.y, triangles = self.triangles)
+        cs = ax.tricontourf(triangulation, self.z, **self.kwargs)
+        if self.cbar:
+            if self.cbar_ticks is not None:
+                cbar = plt.colorbar(cs, ax = ax, ticks = self.cbar_ticks)
+            else: 
+                cbar = plt.colorbar(cs, ax = ax)
+            cbar.set_label(self.cbar_label)
+
+        ax = self.set_2D_ax_properties(ax)
+    
+        return ax
 
 class ImagePlot(Axes2D):
     def __init__(self, image, x_label = "x", y_label = "y", **img_kwargs):
@@ -278,6 +378,7 @@ class ImagePlot(Axes2D):
         self.image = image
         self.img_kwargs = img_kwargs
         self.legend = ""
+        self.plot_grid = False
 
     def plot(self, ax):
 
@@ -392,8 +493,43 @@ class RectanglePlot(Axes2D):
     
         return ax
 
+class PolygonPlot(Axes2D):
+    def __init__(self, xy, **poly_kwargs) -> None:
+        super().__init__("x", "y")
+        self.xy = xy
+        self.poly_kwargs = poly_kwargs
+
+        # Special ax properties
+        self.facecolor = 'none'
+        self.edgecolor = 'black'
+        self.legend = []
+        self.lw = 1
+ 
+        # Update kwargs
+        self.set_default_poly_kwargs()
+
+    def set_default_poly_kwargs(self):
+
+        if 'facecolor' not in self.poly_kwargs:
+            self.poly_kwargs["facecolor"] = self.facecolor
+
+        if 'edgecolor' not in self.poly_kwargs:
+            self.poly_kwargs["edgecolor"] = self.edgecolor
+
+        if 'lw' not in self.poly_kwargs:
+            self.poly_kwargs["lw"] = self.lw
+
+    def plot(self, ax):
+
+        self.set_default_poly_kwargs()
+        
+        ax.add_patch(Polygon(self.xy, **self.poly_kwargs))   
+        ax = self.set_2D_ax_properties(ax)
+
+        return ax
+    
 class PlotData():
-    def __init__(self, plots, filename, savepath, stylesheet, fig_size, custom_fig, subplot_grid, col_sort):
+    def __init__(self, plots, filename, savepath, stylesheet, fig_size, custom_fig, subplot_grid, insert):
         self.plots = plots
         self.filename = filename
         self.fig_size = fig_size
@@ -401,7 +537,7 @@ class PlotData():
         self.savepath = savepath
         self.stylesheet = stylesheet
         self.subplot_grid = subplot_grid
-        self.col_sort = col_sort     
+        self.insert = insert     
 
 class Plotter():
     def __init__(self, save_path = None, stylesheet = None, save_format = "pdf", ink_path = r'C:\Program Files\Inkscape', save_plot_data = True, open_saved_plot = True):
@@ -413,7 +549,7 @@ class Plotter():
         self.open_saved_plot = open_saved_plot
         self.ink_path = ink_path
 
-    def plot(self, *plots, filename = None, fig_size = None, fig_title = None, subplot_grid = None, custom_fig = None, col_sort = True, plt_show = True):
+    def plot(self, *plots, filename = None, fig_size = None, fig_title = None, subplot_grid = None, custom_fig = None, insert = "row", plt_show = True):
 
         if filename is not None: filename = filename.replace(" ", "_")
         n_subplots = len(plots)
@@ -427,7 +563,7 @@ class Plotter():
             fig = custom_fig[0]
             ax = custom_fig[1]
         else:
-            fig, ax = create_figure(n_subplots, subplot_grid, fig_size, col_sort = col_sort)
+            fig, ax = create_figure(n_subplots, subplot_grid, fig_size, insert = insert)
 
         # Loop over subplots
         for i, subplot in enumerate(plots):
@@ -451,8 +587,10 @@ class Plotter():
         if self.save_path is not None:
             unique_filename = self.save_plot(self.save_path, filename, fig)
             if self.save_plot_data:
-                data_filename = self.save_path + "/data_" +  unique_filename + ".pkl"
-                plt_data = PlotData(plots, filename, self.save_path, self.stylesheet, fig_size, custom_fig, subplot_grid, col_sort)
+                data_filename = self.save_path + "/_plt_data/data_" +  unique_filename + ".pkl"
+                isExist = os.path.exists(self.save_path + "/_plt_data")
+                if not isExist: os.makedirs(self.save_path + "/_plt_data")
+                plt_data = PlotData(plots, filename, self.save_path, self.stylesheet, fig_size, custom_fig, subplot_grid, insert)
                 with open(data_filename, 'wb') as file:
                     pickle.dump(plt_data, file)
 
@@ -508,7 +646,7 @@ class Plotter():
         # with open(file) as f:
         #     pkg_name = f.read().replace('\n', '')
 
-        f= open(path + "/" +  filename + ".py","w")
+        f= open(path + "/_plt_data/" +  filename + ".py","w")
         f.write(f"from sky.plotlib import * \nimport numpy as np\nimport pickle \n \n# Load plot data \n")
         f.write(f"file_path = '{data_file_path}' \n")
         f.write("with open(file_path, 'rb') as file:\n")
@@ -519,7 +657,7 @@ class Plotter():
         f.write("filename = plt_data.filename \n")
         f.write("fig_size = plt_data.fig_size \n")
         f.write("custom_fig = plt_data.custom_fig \n")
-        f.write("col_sort = plt_data.col_sort \n")
+        f.write("insert = plt_data.insert \n")
         f.write("subplot_grid = plt_data.subplot_grid \n \n")
 
         f.write("# Recreate plot \n")
@@ -528,9 +666,9 @@ class Plotter():
         f.write("if not isExist: \n")
         f.write("   os.makedirs(folder_path)\n")
         f.write("plotter = Plotter(save_path = save_path + '/regenerated_plots', stylesheet= stylesheet, save_plot_data = False) \n")
-        f.write("plotter.plot(*plots, filename = filename, fig_size = fig_size, custom_fig = custom_fig, subplot_grid = subplot_grid, col_sort = col_sort) \n")
+        f.write("plotter.plot(*plots, filename = filename, fig_size = fig_size, custom_fig = custom_fig, subplot_grid = subplot_grid, insert = insert) \n")
 
-def create_figure(n_subplots, subplot_grid, fig_size, col_sort = True):
+def create_figure(n_subplots, subplot_grid, fig_size, insert = "row"):
         if fig_size is not None:
             fig_size = np.asarray(fig_size)
             fig_size = fig_size / 2.54      # translate cm to inch
@@ -549,7 +687,7 @@ def create_figure(n_subplots, subplot_grid, fig_size, col_sort = True):
                 size = fig_size
             fig, ax = plt.subplots(n_row, n_col, figsize=size)
 
-            if col_sort:
+            if insert == "col":
                 ax = ax.T
 
             ax = ax.flatten()
@@ -575,7 +713,7 @@ def create_figure(n_subplots, subplot_grid, fig_size, col_sort = True):
                     size = fig_size
                 fig, ax = plt.subplots(n_row, n_col, figsize=size)
 
-                if col_sort:
+                if insert == "col":
                     ax = ax.T
                 ax = ax.flatten()
 
@@ -588,7 +726,7 @@ def create_figure(n_subplots, subplot_grid, fig_size, col_sort = True):
                     size = fig_size
                 fig, ax = plt.subplots(n_row, n_col, figsize=size)
 
-                if col_sort:
+                if insert == "col":
                     ax = ax.T
 
                 ax = ax.flatten()
@@ -602,7 +740,7 @@ def create_figure(n_subplots, subplot_grid, fig_size, col_sort = True):
                     size = fig_size
                 fig, ax = plt.subplots(n_row, n_col, figsize=size)
 
-                if col_sort:
+                if insert == "col":
                     ax = ax.T
 
                 ax = ax.flatten()
@@ -616,7 +754,7 @@ def create_figure(n_subplots, subplot_grid, fig_size, col_sort = True):
                     size = fig_size
                 fig, ax = plt.subplots(n_row, n_col, figsize=size)
 
-                if col_sort:
+                if insert == "col":
                     ax = ax.T
 
                 ax = ax.flatten()
